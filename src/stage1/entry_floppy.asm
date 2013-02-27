@@ -41,8 +41,8 @@ EntryPoint:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 %include "disk/fat12block.s"
 %include "disk/floppy.s"
-%include "video/videoinit.asm"
-%include "abort/abort.asm"
+%include "video/videoinit.s"
+%include "abort/abort.s"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Data
