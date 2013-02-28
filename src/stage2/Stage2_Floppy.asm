@@ -68,5 +68,15 @@ Main:
 	; three different routes. We can be either 16-Bit, 32-Bit, or 64-Bit. Due to
 	; this fact, the bootloader will have to split into three parts for stage 3
 	; and beyond.
+	CMP CPUType, 0
+	JE .Go16Bit
+	
+	CMP CPUType, 1
+	JE .Go32Bit
+	
+	CMP CPUType, 2
+	JE .Go64Bit
+	
+	JMP Abort.CPUError
 
 	

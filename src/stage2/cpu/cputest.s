@@ -26,3 +26,47 @@
 ;========================================================================================
 ; Date: 2/27/2013 - 2/27/2013
 ;========================================================================================
+%ifndef _CHARGE_CPU_CPUTEST_S_
+%define _CHARGE_CPU_CPUTEST_S_
+
+CheckCPU:
+	.Check8086:
+		; First, we will push the flags register to the stack.
+		PUSHF
+		
+		; Next, we will pop the value into the AX register, and see if bit 15 of
+		; the flags register is set. If it is, it is an 8086 CPU.
+		POP AX
+		TEST AH, 0x80
+		JNE .CPU16
+		
+		; Next, we will move the value 0x0F0 to the AH register, and then we will
+		; push it onto the stack.
+		MOV AH, 0x30
+		PUSH AX
+		
+		; Next, we will pop the AX value into the flags register, push it back to
+		; the stack, and finally pop the value into the BX register.
+		POPF
+		PUSHF
+		POP BX
+		
+		; Now we will null all bits except the changed bits.
+		XOR AX, BX
+		
+		; Next, we will test bits 12 and 13 of the flags register. If they aren't
+		; changed, we're stuck with a pre-80386 CPU.
+		TEST AH, 0x30
+		JNE .CPU16
+		
+	
+	.CPU16:
+	
+	.CPU32:
+	
+	.CPU64:
+	
+	.CPUNOSETTING:
+	
+
+%endif ;_CHARGE_CPU_CPUTEST_S_
