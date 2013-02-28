@@ -24,9 +24,9 @@
 ; (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
 ;========================================================================================
-; Date: 2/26/2013 - 2/XX/2013
+; Date: 2/26/2013 - 2/27/2013
 ; Assembled as BootEntry_Floppy.bin using the command line:
-;	nasm -fbin -oBootEntry_Floppy.bin entry_floppy.asm
+;	nasm -fbin -o../../bin/BootEntry_Floppy.bin entry_floppy.asm
 ;========================================================================================
 BITS 16
 CPU 8086
@@ -34,7 +34,7 @@ CPU 8086
 ORG 0x7C00
 
 EntryPoint:
-	JMP 0x0000:Main
+	JMP Main
 	
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Includes
@@ -42,12 +42,15 @@ EntryPoint:
 %include "disk/fat12block.s"
 %include "disk/floppy.s"
 %include "video/videoinit.s"
+%include "video/display.s"
 %include "abort/abort.s"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Data
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 Messages:
+	.AbortString:		DB	"ABORT!", 0x0A, 0x0D, 0x00
+	.VideoTestString:	DB	"Test Video!", 0x0A, 0x0D, 0x00
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Main
@@ -62,6 +65,10 @@ Main:
 	MOV SS, AX
 	MOV SP, 0xFFFF
 	STI
+	
+	; Next we flush the Code Segment
+	JMP 0x0000:Main.Flush
+	.Flush:
 	
 	; Next, we move the boot device number into
 	; the location of ExtFATBlock.DriveNumber.
@@ -95,27 +102,26 @@ Main:
 	; to LBA 5. These will be loaded to 0x0050:0x0000 (0x0500 Physical).
 	MOV CX, 5
 	MOV AX, 1
-	MOV BX, 0x0050
-	MOV ES, BX
 	MOV BX, 0x0000
-	CALL DiskReadSectors
+	MOV ES, BX
+	MOV BX, 0x0500
+	CALL ReadSectors
 	
 	; If the loading failed, the carry flag is set, and the DX contains
-	; error information. DH contains the sector it failed on, and DL
-	; contains the error code. If DH is greater than 1, then we will have
-	; access to more advanced error printing routines. This will give us
-	; the ability to provide a more informational error message.
+	; error information. DL contains the sector it failed on, and DH
+	; contains the error code. We then abort.
 	JNC ExecuteStage2
-	CMP DH, 1
-	JA AbortAdvanced
-	MOV SI, Messages.StandardError
-	JE AbortStandard
-	MOV SI, Messages.UnknownError
-	JMP AbortUnknown
+	JMP Abort
 	
 ExecuteStage2:
 	; This will jump to our second stage bootloader, located at physical
-	; address 0x0500. We will set the segment registers to 0x0050.
-	JMP 0x0050:0x0000
+	; address 0x0500. We will set the segment registers to 0x0000.
+	JMP 0x0000:0x0500
+
+; Whatever area is left on the floppy will be nulled.
+TIMES 510 - ($ - $$) DB 0
+
+; The boot signature is needed for boot.
+DW 0xAA55
 	
 	

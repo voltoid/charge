@@ -24,39 +24,21 @@
 ; (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
 ;========================================================================================
-; Date: 2/26/2013 - 2/27/2013
+; Date: 2/26/2013 - 2/XX/2013
 ;========================================================================================
-%ifndef _CHARGE_DISK_FAT12BLOCK_S_
-%define _CHARGE_DISK_FAT12BLOCK_S_
+%ifndef _CHARGE_ABORT_ABORT_S_
+%define _CHARGE_ABORT_ABORT_S_
 
-BITS 16
-
-; The standard FAT12 BIOS Parameter Block,
-; also known as the FAT Block or BPB.
-; These fields are here for legacy purposes,
-; and in most cases, the drive geometry
-; will be read by directly accessing the
-; hardware.
-FATBlock:
-	.OEMName:			DB	"CHARGE  "
-	.BytesPerSector:	DW	512
-	.SectorsPerCluster:	DB	1
-	.ReservedSectors:	DW	1
-	.NumberOfFATs:		DB	2
-	.RootEntries:		DW	224
-	.TotalSectors:		DW	2880
-	.MediaType:			DB	0xF0
-	.SectorsPerFAT:		DW	9
-	.SectorsPerTrack:	DW	18
-	.HeadsPerCylinder:	DW	2
-	.HiddenSectors:		DD	0
-	.TotalSectorsBig:	DD	0
-ExtFATBlock:
-	.DriveNumber:		DB	0
-	.Unused:			DB	0
-	.ExtBootSignature:	DB	0x29
-	.SerialNumber:		DD	0x02011997
-	.VolumeLabel:		DB	"CHARGE BOOT"
-	.FileSystem:		DB	"FAT12   "
-
-%endif ;_CHARGE_DISK_FAT12BLOCK_S_
+; Abort - Halts booting
+Abort:
+	.Advanced:
+	.Standard:
+	.Unknown:
+		MOV SI, Messages.AbortString
+		CALL VideoDisplayString
+	
+	.Stop:
+		HLT
+		JMP .Stop
+		
+%endif ;_CHARGE_ABORT_ABORT_S_

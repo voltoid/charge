@@ -24,39 +24,89 @@
 ; (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 ; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
 ;========================================================================================
-; Date: 2/26/2013 - 2/27/2013
+; Date: 2/26/2013 - 2/XX/2013
 ;========================================================================================
-%ifndef _CHARGE_DISK_FAT12BLOCK_S_
-%define _CHARGE_DISK_FAT12BLOCK_S_
+%ifndef _CHARGE_VIDEO_DISPLAY_S
+%define _CHARGE_VIDEO_DISPLAY_S
 
-BITS 16
+; VideoDisplayChar - Displays a single ASCII Char
+; Input:
+;	AL - ASCII Character to display
+VideoDisplayChar:
+	; Push many registers.
+	PUSH AX
+	PUSH BX
+	PUSH CX
+	PUSH DX
+	PUSH SI
+	PUSH DI
+	PUSH BP
+	
+	; We will be using the teletype output function, which is 0x0E.
+	MOV AH, 0x0E
+	
+	; We then must set the display page.
+	MOV BH, [VideoDisplayPage]
+	
+	; Now we execute the interrupt.
+	INT 0x10
+	
+	; Now we pop the previously pushed registers.
+	POP BP
+	POP DI
+	POP SI
+	POP DX
+	POP CX
+	POP BX
+	POP AX
+	
+	; Now we return.
+	RET
+	
+; VideoDisplayString - Displays an ASCII String
+; Input:
+;	DS:SI - Address of the ASCII String
+VideoDisplayString:
+	; If we determined before that there was no video card, then
+	; there is no reason to print a string. If the flag for 'Video
+	; Card Present' is zero, we will just return.
+	CMP BYTE [VideoCardFlags], 0
+	JNE .PrintString
+	RET
+	
+	.PrintString:
+		; We will need to store these values for later.
+		PUSH AX
+		PUSH SI
+		
+		; Next we clear the carry flag just in case it was
+		; accidentally set.
+		CLD
+		
+		; Now we jump just after the display call so we can load a
+		; char value.
+		JMP .Init
+		
+		.Loop:
+			; Now we call the character display function.
+			CALL VideoDisplayChar
+			
+		.Init:
+			; First, we load a string byte from the DS:SI memory
+			; location.
+			XCHG BX, BX
+			LODSB
+			
+			; If it is 0x0 (END OF STRING), we will stop looping.
+			OR AL, AL
+			JNZ .Loop
+			
+	.Return:
+		; We pop the previously pushed values.
+		POP SI
+		POP AX
 
-; The standard FAT12 BIOS Parameter Block,
-; also known as the FAT Block or BPB.
-; These fields are here for legacy purposes,
-; and in most cases, the drive geometry
-; will be read by directly accessing the
-; hardware.
-FATBlock:
-	.OEMName:			DB	"CHARGE  "
-	.BytesPerSector:	DW	512
-	.SectorsPerCluster:	DB	1
-	.ReservedSectors:	DW	1
-	.NumberOfFATs:		DB	2
-	.RootEntries:		DW	224
-	.TotalSectors:		DW	2880
-	.MediaType:			DB	0xF0
-	.SectorsPerFAT:		DW	9
-	.SectorsPerTrack:	DW	18
-	.HeadsPerCylinder:	DW	2
-	.HiddenSectors:		DD	0
-	.TotalSectorsBig:	DD	0
-ExtFATBlock:
-	.DriveNumber:		DB	0
-	.Unused:			DB	0
-	.ExtBootSignature:	DB	0x29
-	.SerialNumber:		DD	0x02011997
-	.VolumeLabel:		DB	"CHARGE BOOT"
-	.FileSystem:		DB	"FAT12   "
+		; Finally, we return.
+		RET
 
-%endif ;_CHARGE_DISK_FAT12BLOCK_S_
+%endif ;_CHARGE_VIDEO_DISPLAY_S
