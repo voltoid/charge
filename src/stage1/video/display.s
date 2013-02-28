@@ -94,7 +94,6 @@ VideoDisplayString:
 		.Init:
 			; First, we load a string byte from the DS:SI memory
 			; location.
-			XCHG BX, BX
 			LODSB
 			
 			; If it is 0x0 (END OF STRING), we will stop looping.
