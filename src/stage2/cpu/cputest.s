@@ -59,6 +59,9 @@ CheckCPU:
 		TEST AH, 0x30
 		JNE .CPU16
 		
+		; Now we are going to setup a temporary interrupt handler to replace the
+		; handler for the invald opcode exception - interrupt 0x6
+		
 	
 	.CPU16:
 	
